@@ -1,0 +1,23 @@
+docker pull redis (Image pulling)
+docker run -d --name redis-container -p 6379:6379 redis (creating container)
+docker ps
+
+
+
+----------------------------------------------
+# For code checking.
+
+import redis
+
+r = redis.Redis(host='127.0.0.1', port=6379)
+print(r.ping())  # Should print: True
+----------------------------------------------
+
+By default, data in a Docker container is not persistent. To persist data:-
+
+--> docker run -d --name redis-container -p 6379:6379 -v redis-data:/data redis
+This maps the redis-data volume to /data inside the container.
+
+
+docker start <container-name-or-id> 
+docker attach <container-name-or-id> (If you want to interact with the container's terminal.)

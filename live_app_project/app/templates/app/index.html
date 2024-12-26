@@ -1,0 +1,125 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Count Page</h1>
+    <pi id="ct"></p>
+  
+    
+<script>
+
+var ws = new WebSocket('ws://127.0.0.1:8000/ws/sc/');
+
+// ws.onopen = function(event){
+// console.log("Websocket connection open", event);
+// ws.send("Hi, message sent from client to server...")
+// }
+
+// ws.onmessage = function(event){
+//     console.log("Websocket data received from server", event);
+// }
+
+// ws.onerror = function(event){
+//     console.log("Websocket error occurred", event);
+// }
+
+// ws.onclose = function(event){
+//     console.log("Websocket connection is closed", event);
+// }
+
+
+ws.addEventListener('open', (event)=>{
+    console.log("Websocket connection open", event);
+    ws.send("Hi, This is message from client to server...");
+})
+
+ws.addEventListener('message', (event)=>{
+    console.log("Websocket message received from server:", event.data);
+    let data = JSON.parse(event.data)
+    document.getElementById("ct").innerText = `${data.count} ${typeof(data)}`;
+})
+
+ws.addEventListener('error', (event)=>{
+    console.log("Websocket error occured", event);
+})
+
+ws.addEventListener('close', (event)=>{
+    console.log("Websocket connection closed", event);
+})
+
+</script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+</head>
+<body>
+    <h1>Chat App</h1>
+    <h3>Welcome to {{groupname}} Group</h3>
+
+    <textarea id="chat-log" cols="100" rows="20">
+    {% for chat in chats %}
+    {{chat.content}}
+    {% endfor %}
+    </textarea><br>
+    <input type="text" id="chat-message-input" size="100"><br>
+    <input type="button" value="send" id="chat-message-submit">
+
+    <!-- Loading variable for javascript. -->
+    {{groupname | json_script:"group_name"}}
+
+<script>
+    // This is coming from django url, then from context then script has been sent in script through jinja template's 'json_script' tag.
+    const groupName = JSON.parse(document.getElementById('group_name').textContent)
+
+    // let ws = new WebSocket('ws://127.0.0.1:8000/ws/sc/')
+
+    let ws = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/sc/'
+        + groupName
+        + '/'
+    )
+
+    ws.onopen = function(event){
+    console.log("Websocket connection open", event);
+    //ws.send("Hi, This message is from client to server.")
+    }
+
+    ws.onmessage = function(event){
+        console.log("Websocket data received from server", event);
+        const data = JSON.parse(event.data); // Because the data we are getting as a str.
+        document.querySelector('#chat-log').value += data.user +':'+ data.msg + '\n'
+
+    }
+
+    ws.onerror = function(event){
+        console.log("Websocket error occurred", event);
+    }
+
+    ws.onclose = function(event){
+        console.log("Websocket connection is closed", event);
+    }
+    
+    document.getElementById("chat-message-submit").onclick = function(event){
+        const messageInputDOM = document.getElementById('chat-message-input')
+        const message = messageInputDOM.value
+        ws.send(JSON.stringify({
+            'msg': message
+        }))
+        messageInputDOM.value = ""
+    }
+</script>
+</body>
+</html>

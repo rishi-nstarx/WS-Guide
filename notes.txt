@@ -1,0 +1,158 @@
+---> python -m pip install -U 'channels[daphne]'
+
+
+We call the as_asgi() classmethod when routing our consumers.
+Its similarly like as_view() when we use class based views.
+
+
+Please be wary of any other third-party apps that require an overloaded or replacement 'runserver' command.
+Daphne provides a separate 'runserver' command and may conflict with it.
+An example of such a conflict is with whitenoise.runserver_nostatic from whitenoise.
+In order to solve such issues, make sure daphne is at the top of your INSTALLED_APPS or remove the offending app altogether.
+
+
+
+----------Consumers-------------
+
+Consumers is like django views.
+
+-------------------------------
+import json
+
+json.dumps() --> From Python dictionary to json string. We can use this to convert list in string.
+json.loads() --> from json string to python dictionary.
+
+
+-------------------------------
+# This is for Javascript use.
+
+JSON.stringify() --> From Javascript object to json string.
+JSON.parse() --> From json string to Javascript object.
+
+_______________________________________________________________________________________________
+
+                            -----Channel Layers-----
+
+Channel layers allow you to talk b/w different instances of application.
+It is for high level application-to-application communication.
+
+It is the transport mechanism that allows multiple consumer instance to communicate with each other and other
+part of django.
+
+They're userful part of making a distributed real-time application if you don't want to have to shuttle all of
+your messages or events through a database.
+
+
+Types
+-----
+Redis Channel Layer.
+In-Memory Channel Layer. (Only for development)
+
+
+Terms
+-----
+
+Channels:- Channels are a FIFO queue with at-most-once delivery semantics. Each Channel  has a name. Messages
+are sent to channels by anyone who knows the channel name and the given to consumer listening on the that channel.
+
+Groups:- Nothing but the group of channels/consumers. Each group has a name. You can remove/add channels/consumers
+in groups. It is useful when you want to broadcast something to multiple channels/consumers at once.
+
+Message:- Messages should be a dict. Because there messages are sometimes sent over a network, they need to
+be serializable.
+
+
+---------Redis Channel Layer---------
+
+---> pip install channels-redis
+# https://pypi.org/project/channels-redis/
+
+
+Works as the communication store for the channel layer.
+Use 'channel_redis' package in order to use.
+'channel_redis' is the only official Django-maintained channel layer supported for production use.
+
+The layer uses Redis as its backing store, and supports both a single-server and sharded configurations,
+as well as group support.
+
+-----------Redis Channel Layer config----------
+
+https://channels.readthedocs.io/en/latest/topics/channel_layers.html
+
+
+some methods and attributes
+---------------------------
+
+get_channel_layer() :- Gives default channel layer from a project.
+
+channel_layer :- This is attribute, gives default channel layer from a project. Conatains pointer to the channel
+layer instance, only if you are using consumers.
+
+channel_name :- This attribute conatains the channel name that will reach the consumer.
+
+send('channel_name', message:[dict])
+group_send('group_name', message:[dict])
+group_add('group_name', 'channel_name')
+group_discard('group_name', 'channel_name')
+
+
+Exceptions
+-----------
+MessageTooLarge
+ChannelFull
+
+
+
+
+if you have two different instance of application (here that is two independent tabs in browser just for convenience) then
+both instance will have two different channel layer.
+
+Note: For every individual request channel name gets changed, even though you're refreshing the page.
+
+
+
+
+
+Memurai :- (Redis for windows beacuse Redis is only supported by linux.)
+
+----------------------------------------------------------------------------------
+Database
+--------
+
+The Django ORM is a synchronous piece of code, if you want to access it from asychronous code you need to
+do special handling to make sure its connections are closed properly.
+
+if you are writing asynchronous code, however, you will need to call database methpds in a safe, synchronous
+context, using database_sync_to_async.
+
+                            ------database_sync_to_async------
+
+Write your ORM queries in a separte function or method, and then call it with database_sync_to_async.
+This is not mandatory but is a good practice. You can also use it as a decorator.
+
+
+----------------------------------------------------------------------------------------
+
+Authentication:
+--------------
+
+--> We will have to configure this in asgi.py.
+
+AuthMiddleware requires SessionMiddleware to function, which itself requires CookieMiddleware. 
+For convenience, these are also provided as a combined callable called AuthMiddlewareStack
+that includes all three.
+
+To access the user, just use self.scope["user"] in your consumer.
+
+________________________________________________________________________________________________________________
+
+Generic Consumer
+----------------
+
+Channel ships with generic consumers that wrap common functionality up so you don't need to rewrite it, specifically
+for HTTP and websockets handling.
+
+JSONWebSocketConsumer
+---------------------
+
+This works like WebsocketConsumer, except it will auto-encode and decode to JSON  sent as WebSocket text frames.
